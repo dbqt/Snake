@@ -9,7 +9,10 @@ public class SnakeLogic : MonoBehaviour {
 	public GameObject BodyPrefab;
 	public GameObject FoodPrefab;
 
-	public Text middleText;
+	public AudioClip gulp;
+	public AudioClip die;
+
+	public Text middleText, title;
 	public Text score;
 
 	public Vector2 Limit;
@@ -18,7 +21,7 @@ public class SnakeLogic : MonoBehaviour {
 	public float delayRate = 0.9f;
 	private float internalDelay;
 
-	private Vector3 direction;
+	private Vector3 direction, mousePosInit;
 	private Stack<GameObject> snake;
 	private GameObject food;
 
@@ -31,9 +34,10 @@ public class SnakeLogic : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		middleText.text = "Seasonal Snake\nStart";
-
+		mousePosInit = Vector3.zero;
+		middleText.text = "Start";
 		middleText.enabled = true;
+		title.enabled = true;
 		scoreValue = 0;
 		gamestate = 2;
 		internalDelay = delay;
@@ -51,19 +55,60 @@ public class SnakeLogic : MonoBehaviour {
 			if(Input.GetAxis("Horizontal") > 0f)
 			{
 				direction = Vector3.right;
+				Head.transform.eulerAngles = new Vector3(0f, 0f, 90f);
 			}
 			else if(Input.GetAxis("Horizontal") < 0f)
 			{
 				direction = -Vector3.right;
+				Head.transform.eulerAngles = new Vector3(0f, 0f, -90f);
 			}
 			else if(Input.GetAxis("Vertical") > 0f)
 			{
 				direction = Vector3.up;
+				Head.transform.eulerAngles = new Vector3(0f, 0f, 180f);
 			}
 			else if(Input.GetAxis("Vertical") < 0f)
 			{
 				direction = -Vector3.up;
+				Head.transform.eulerAngles = new Vector3(0f, 0f, 0f);
 			}
+
+			if (Input.GetMouseButtonDown(0))
+           	{
+				mousePosInit = Input.mousePosition;		
+           	}
+        	else if (Input.GetMouseButtonUp(0))
+           	{
+           		Vector3 diff = Input.mousePosition - mousePosInit;
+           		if(Mathf.Abs(diff.x) > Mathf.Abs(diff.y))
+           		{
+           			if(diff.x > 0)
+           			{
+           				direction = Vector3.right;
+						Head.transform.eulerAngles = new Vector3(0f, 0f, 90f);
+           			}
+           			else
+           			{
+           				direction = -Vector3.right;
+						Head.transform.eulerAngles = new Vector3(0f, 0f, -90f);
+           			}
+           		}
+           		else
+           		{
+           			if(diff.y > 0)
+           			{
+           				direction = Vector3.up;
+						Head.transform.eulerAngles = new Vector3(0f, 0f, 180f);
+           			}
+           			else
+           			{
+           				direction = -Vector3.up;
+						Head.transform.eulerAngles = new Vector3(0f, 0f, 0f);
+           			}
+           		}
+           	}
+
+
 		}
 		else if(gamestate == 1)
 		{
@@ -77,6 +122,8 @@ public class SnakeLogic : MonoBehaviour {
 			if(Input.anyKey)
 			{
 				middleText.enabled = false;
+				title.enabled = false;
+
 				gamestate = 0;
 				Invoke("UpdatePosition", 1f);
 			}
@@ -117,10 +164,17 @@ public class SnakeLogic : MonoBehaviour {
 		snake.Pop();
 		snake.Push(Instantiate(BodyPrefab, Head.transform.position, Quaternion.identity) as GameObject);
 		snake.Push(Head);
+		// Add difficulty
 		internalDelay *= delayRate; 
+		// Update score
 		scoreValue++;
 		score.text = "Score: " + scoreValue;
+		// Move head
 		Move(Head, Head.transform.position + direction);
+		// Play gulp sound.
+		AudioSource audio = GetComponent<AudioSource>();
+		audio.clip = gulp;
+        audio.Play();
 	}
 
 	// Returns old position
@@ -157,7 +211,19 @@ public class SnakeLogic : MonoBehaviour {
 	private void GameOver()
 	{
 		//Debug.Log("GameOver");
-		middleText.text = "Game Over\nTry Again";
+		// Play die sound.
+		AudioSource audio = GetComponent<AudioSource>();
+		audio.clip = die;
+        audio.Play();
+		//highscore: 
+		int hs = PlayerPrefs.GetInt("hs", 0);
+		if(scoreValue > hs)
+		{
+			PlayerPrefs.SetInt("hs", hs);
+			hs = scoreValue;
+		}
+
+		middleText.text = "Game Over\nTry Again\nHighscore: "+hs;
 		middleText.enabled = true;
 		gamestate = 1;
 	}
