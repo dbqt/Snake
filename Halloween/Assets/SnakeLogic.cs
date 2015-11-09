@@ -133,7 +133,7 @@ public class SnakeLogic : MonoBehaviour {
 
 	private void SpawnNewFood()
 	{
-		Vector3 newFoodPosition = new Vector3(Mathf.Round(Random.value * Limit.x), Mathf.Round(Random.value * Limit.y), 0f);
+		Vector3 newFoodPosition = new Vector3(Mathf.Round((Random.value-0.5f) * Limit.x-1f), Mathf.Round((Random.value-0.5f) * Limit.y-1f), 0f);
 		food = Instantiate(FoodPrefab, newFoodPosition, Quaternion.identity) as GameObject;
 	}
 
